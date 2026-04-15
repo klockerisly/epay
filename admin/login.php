@@ -21,7 +21,8 @@ if(isset($_GET['act']) && $_GET['act']=='login'){
     exit(json_encode(['code'=>-1,'msg'=>'验证码错误']));
   }
   if(file_exists($login_limit_file)){
-    $login_limit = unserialize(file_get_contents($login_limit_file));
+    $login_limit = json_decode(file_get_contents($login_limit_file), true);
+    if(!is_array($login_limit)) $login_limit = ['count'=>0,'time'=>0];
     if($login_limit['count']>=$login_limit_count && $login_limit['time']>time()-86400){
       exit(json_encode(['code'=>-1,'msg'=>'多次登录失败，暂时禁止登录。可删除@login.lock文件解除限制']));
     }
@@ -31,7 +32,7 @@ if(isset($_GET['act']) && $_GET['act']=='login'){
 		$session=md5($username.$password.$password_hash);
 		$expiretime=time() + 2592000;
 		$token=authcode("{$username}\t{$session}\t{$expiretime}", 'ENCODE', SYS_KEY);
-		setcookie("admin_token", $token, $expiretime, null, null, null, true);
+		secure_setcookie("admin_token", $token, $expiretime);
     unset($_SESSION['vc_code']);
     exit(json_encode(['code'=>0]));
   }else{
@@ -41,7 +42,7 @@ if(isset($_GET['act']) && $_GET['act']=='login'){
     }
     $login_limit['count']++;
     $login_limit['time']=time();
-    file_put_contents($login_limit_file, serialize($login_limit));
+    file_put_contents($login_limit_file, json_encode($login_limit));
     $retry_times = $login_limit_count-$login_limit['count'];
     unset($_SESSION['vc_code']);
     if($retry_times == 0){
@@ -52,7 +53,7 @@ if(isset($_GET['act']) && $_GET['act']=='login'){
   }
 }elseif(isset($_GET['logout'])){
 	if(!checkRefererHost())exit();
-	setcookie("admin_token", "", time() - 2592000);
+	secure_setcookie("admin_token", "", time() - 2592000);
 	exit("<script language='javascript'>window.location.href='./login.php';</script>");
 }elseif($islogin==1){
 	exit("<script language='javascript'>alert('您已登录！');window.location.href='./';</script>");

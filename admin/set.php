@@ -1272,7 +1272,14 @@ echo '<div class="panel panel-primary">
 <div class="panel-body">';
 if($_POST['s']==1){
 if(!checkRefererHost())exit;
-if(copy($_FILES['file']['tmp_name'], ROOT.'assets/img/logo.png')){
+$allowed_logo_types = ['image/gif'=>'gif','image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp'];
+$upload_file = $_FILES['file'];
+$upload_mime = mime_content_type($upload_file['tmp_name']);
+if(!isset($allowed_logo_types[$upload_mime])){
+	echo "上传失败，只允许上传 GIF/JPEG/PNG/WEBP 格式图片";
+}elseif($upload_file['size'] > 2 * 1024 * 1024){
+	echo "上传失败，文件大小不能超过 2MB";
+}elseif(copy($upload_file['tmp_name'], ROOT.'assets/img/logo.png')){
 	echo "成功上传文件!<br>（可能需要清空浏览器缓存才能看到效果，按Ctrl+F5即可一键刷新缓存）";
 }else{
 	echo "上传失败，可能没有文件写入权限";

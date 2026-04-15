@@ -156,15 +156,19 @@ case 'setArticle': //文章状态
 	exit('{"code":0,"msg":"succ"}');
 break;
 case 'article_upload':
-	$file_name = $_FILES['imgFile']['name'];
 	$tmp_name = $_FILES['imgFile']['tmp_name'];
-	//获得文件扩展名
-	$temp_arr = explode(".", $file_name);
-	$file_ext = array_pop($temp_arr);
-	$file_ext = strtolower(trim($file_ext));
-	if (in_array($file_ext, array('gif', 'jpg', 'jpeg', 'png', 'bmp', 'webp')) === false) {
-		exit('{"error":1,"message":"上传文件扩展名是不允许的扩展名。"}');
+	$allowed_upload_types = ['image/gif'=>'gif','image/jpeg'=>'jpg','image/png'=>'png','image/bmp'=>'bmp','image/webp'=>'webp'];
+	if(!is_uploaded_file($tmp_name)){
+		exit('{"error":1,"message":"无效的文件上传"}');
 	}
+	$upload_mime = mime_content_type($tmp_name);
+	if(!isset($allowed_upload_types[$upload_mime])){
+		exit('{"error":1,"message":"上传文件类型不允许，只支持 GIF/JPEG/PNG/BMP/WEBP"}');
+	}
+	if($_FILES['imgFile']['size'] > 5 * 1024 * 1024){
+		exit('{"error":1,"message":"文件大小不能超过 5MB"}');
+	}
+	$file_ext = $allowed_upload_types[$upload_mime];
 	$filename = md5_file($tmp_name).'.'.$file_ext;
 	$fileurl = '/assets/img/article/'.$filename;
 	if(copy($tmp_name, ROOT.'assets/img/article/'.$filename)){

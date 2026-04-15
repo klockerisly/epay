@@ -761,6 +761,25 @@ function checkRefererHost(){
 	if(strpos($http_host,':'))$http_host = substr($http_host, 0, strpos($http_host, ':'));
 	return $url_arr['host'] === $http_host;
 }
+
+/**
+ * Set a secure cookie with HttpOnly and SameSite=Lax flags.
+ */
+function secure_setcookie($name, $value, $expire=0, $path='/', $httponly=true){
+	$secure = is_https();
+	if(PHP_VERSION_ID >= 70300){
+		setcookie($name, $value, [
+			'expires'  => $expire,
+			'path'     => $path,
+			'secure'   => $secure,
+			'httponly' => $httponly,
+			'samesite' => 'Lax',
+		]);
+	}else{
+		// PHP < 7.3: encode SameSite into the path parameter
+		setcookie($name, $value, $expire, $path.'; SameSite=Lax', '', $secure, $httponly);
+	}
+}
 function randFloat($min=0, $max=1){
 	return $min + mt_rand()/mt_getrandmax() * ($max-$min);
 }
